@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sisyphus Cooling Simulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.18.0/dist/plotly.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding-top: 20px;
+            background-color: #ffffff;
+        }
+        html {
+            background-color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            background-color: #ffffff;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-tabs {
+            background-color: #ffffff;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+            background-color: #f0f0f0;
+            margin-right: 4px;
+        }
+        .nav-tabs .nav-link.active {
+            color: #0056b3;
+            font-weight: 500;
+            background-color: #ffffff;
+        }
+        #world-model-graph {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .simulation-controls {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .plot-container {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .equation {
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-style: italic;
+            margin: 10px 0;
+        }
+        .concept-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0056b3;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .tab-content {
+            margin-top: 20px;
+            background-color: #ffffff;
+        }
+        .footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .interactive-demo {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .atom {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #0056b3;
+            border-radius: 50%;
+        }
+        #lattice-visualization {
+            position: relative;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .lattice-wave {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-4">
+            <h1 class="display-4">Sisyphus Cooling Simulation</h1>
+            <p class="lead">An interactive educational tool for understanding sub-Doppler laser cooling techniques</p>
+        </header>
+
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="intro-tab" data-bs-toggle="tab" data-bs-target="#intro" type="button" role="tab" aria-controls="intro" aria-selected="true">Introduction</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="theory-tab" data-bs-toggle="tab" data-bs-target="#theory" type="button" role="tab" aria-controls="theory" aria-selected="false">Theory</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="simulation-tab" data-bs-toggle="tab" data-bs-target="#simulation" type="button" role="tab" aria-controls="simulation" aria-selected="false">Simulation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="world-model-tab" data-bs-toggle="tab" data-bs-target="#world-model" type="button" role="tab" aria-controls="world-model" aria-selected="false">World Model</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab" aria-controls="comparison" aria-selected="false">Cooling Methods</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <!-- Introduction Tab -->
+            <div class="tab-pane fade show active" id="intro" role="tabpanel" aria-labelledby="intro-tab">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h2>Sisyphus Cooling</h2>
+                        <p>
+                            Sisyphus cooling is a sub-Doppler laser cooling technique that allows atoms to reach temperatures 
+                            significantly below the Doppler cooling limit. Named after the Greek mythological figure Sisyphus, 
+                            who was condemned to roll a boulder up a hill only to have it roll back down, this technique 
+                            exploits a similar repetitive energy loss mechanism.
+                        </p>
+                        <p>
+                            In Sisyphus cooling, atoms repeatedly climb potential hills and lose energy through optical 
+                            pumping processes, leading to efficient cooling below the Doppler limit.
+                        </p>
+                        
+                        <div class="concept-card">
+                            <h3>Key Concepts</h3>
+                            <ul>
+                                <li><strong>Polarization Gradient:</strong> Spatially varying polarization created by counter-propagating laser beams</li>
+                                <li><strong>Optical Lattice:</strong> Periodic potential landscape experienced by atoms</li>
+                                <li><strong>Optical Pumping:</strong> Light-induced transitions between atomic ground state sublevels</li>
+                                <li><strong>Sisyphus Effect:</strong> Repetitive process of climbing potential hills and losing energy</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Temperature Limits
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Doppler Limit:</strong> ~146 μK for Rubidium-87</p>
+                                <p><strong>Recoil Limit:</strong> ~0.18 μK for Rubidium-87</p>
+                                <p><strong>Sisyphus Cooling:</strong> Can reach temperatures close to the recoil limit</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                Rubidium-87 Properties
+                            </div>
+                            <div class="card-body">
+                                <p><strong>D2 Transition:</strong> 5²S₁/₂ → 5²P₃/₂</p>
+                                <p><strong>Wavelength:</strong> 780.241 nm</p>
+                                <p><strong>Natural Linewidth:</strong> 6.065 MHz</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theory Tab -->
+            <div class="tab-pane fade" id="theory" role="tabpanel" aria-labelledby="theory-tab">
+                <h2>Theoretical Background</h2>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Energy Level Structure</h3>
+                        <p>
+                            For Rubidium-87, we focus on the D2 transition between the 5²S₁/₂ ground state and the 
+                            5²P₃/₂ excited state. In our simplified model, we consider:
+                        </p>
+                        <ul>
+                            <li>Ground state: F=2 with magnetic sublevels m<sub>F</sub> = -2, -1, 0, 1, 2</li>
+                            <li>Excited state: F'=3 with magnetic sublevels m<sub>F</sub> = -3, -2, -1, 0, 1, 2, 3</li>
+                        </ul>
+                        <p>
+                            The transitions between these levels are governed by selection rules and 
+                            Clebsch-Gordan coefficients, which determine the coupling strengths.
+                        </p>
+                        
+                        <h3>Optical Lattice Potential</h3>
+                        <p>
+                            Counter-propagating laser beams with orthogonal linear polarizations create a standing wave 
+                            with a spatially varying polarization. This results in a periodic potential landscape for atoms, 
+                            where different ground state sublevels experience different potentials.
+                        </p>
+                        <div class="equation">
+                            U(x, m_F) = U_0 [1 - cos(2kx + φ(m_F))]
+                        </div>
+                        <p>
+                            where U<sub>0</sub> is the potential depth, k is the wavenumber, and φ(m<sub>F</sub>) is a 
+                            phase that depends on the magnetic sublevel.
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h3>Polarization Gradient</h3>
+                        <p>
+                            The polarization of the light field varies spatially from σ<sup>+</sup> to linear to σ<sup>-</sup> 
+                            and back, with a period of λ/2. This variation is crucial for the Sisyphus cooling mechanism.
+                        </p>
+                        
+                        <h3>Optical Pumping</h3>
+                        <p>
+                            As atoms move through the polarization gradient, they undergo optical pumping between different 
+                            ground state sublevels. The pumping rates depend on the local polarization and the Clebsch-Gordan 
+                            coefficients.
+                        </p>
+                        
+                        <h3>Sisyphus Effect</h3>
+                        <p>
+                            The key cooling mechanism works as follows:
+                        </p>
+                        <ol>
+                            <li>An atom in a specific ground state sublevel moves up a potential hill</li>
+                            <li>Near the top of the hill, it's optically pumped to another sublevel with lower potential energy</li>
+                            <li>The energy difference is carried away by the scattered photon</li>
+                            <li>This process repeats, continuously removing energy from the atom's motion</li>
+                        </ol>
+                        <p>
+                            This mechanism allows cooling to temperatures well below the Doppler limit, approaching the 
+                            recoil limit.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Key Equations
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Recoil Energy:</strong></p>
+                                        <div class="equation">
+                                            E_r = \frac{(\hbar k)^2}{2m}
+                                        </div>
+                                        
+                                        <p><strong>Recoil Temperature:</strong></p>
+                                        <div class="equation">
+                                            T_r = \frac{E_r}{k_B}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Doppler Temperature:</strong></p>
+                                        <div class="equation">
+                                            T_D = \frac{\hbar \Gamma}{2k_B}
+                                        </div>
+                                        
+                                        <p><strong>Optical Pumping Rate:</strong></p>
+                                        <div class="equation">
+                                            R_{ij} = \frac{\Omega^2}{4\Delta^2} \Gamma |C_{ij}|^2
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Tab -->
+            <div class="tab-pane fade" id="simulation" role="tabpanel" aria-labelledby="simulation-tab">
+                <h2>Interactive Simulation</h2>
+                
+                <div class="simulation-controls">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="detuning-slider" class="form-label">Detuning (Γ units)</label>
+                                <input type="range" class="form-range" id="detuning-slider" min="-10" max="-1" step="0.5" value="-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>-10Γ</span>
+                                    <span id="detuning-value">-3Γ</span>
+                                    <span>-1Γ</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="rabi-slider" class="form-label">Rabi Frequency (Γ units)</label>
+                                <input type="range" class="form-range" id="rabi-slider" min="0.5" max="5" step="0.5" value="2">
+                                <div class="d-flex justify-content-between">
+                                    <span>0.5Γ</span>
+                                    <span id="rabi-value">2Γ</span>
+                                    <span>5Γ</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="initial-temp-slider" class="form-label">Initial Temperature (μK)</label>
+                                <input type="range" class="form-range" id="initial-temp-slider" min="50" max="500" step="50" value="100">
+                                <div class="d-flex justify-content-between">
+                                    <span>50 μK</span>
+                                    <span id="initial-temp-value">100 μK</span>
+                                    <span>500 μK</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12 text-center">
+                            <button id="start-simulation" class="btn btn-primary me-2">Start Simulation</button>
+                            <button id="reset-simulation" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Temperature Evolution
+                            </div>
+                            <div class="card-body">
+                                <div id="temperature-plot" class="plot-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Velocity Distribution
+                            </div>
+                            <div class="card-body">
+                                <div id="velocity-plot" class="plot-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Optical Lattice Visualization
+                            </div>
+                            <div class="card-body">
+                                <div id="lattice-visualization"></div>
+                                <div class="d-flex justify-content-center mt-3">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="mf-state" id="mf-minus2" value="-2" checked>
+                                        <label class="form-check-label" for="mf-minus2">m<sub>F</sub> = -2</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="mf-state" id="mf-minus1" value="-1">
+                                        <label class="form-check-label" for="mf-minus1">m<sub>F</sub> = -1</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="mf-state" id="mf-0" value="0">
+                                        <label class="form-check-label" for="mf-0">m<sub>F</sub> = 0</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="mf-state" id="mf-plus1" value="1">
+                                        <label class="form-check-label" for="mf-plus1">m<sub>F</sub> = 1</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="mf-state" id="mf-plus2" value="2">
+                                        <label class="form-check-label" for="mf-plus2">m<sub>F</sub> = 2</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Simulation Results
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Initial Value</th>
+                                            <th>Final Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Temperature</td>
+                                            <td id="initial-temperature">100 μK</td>
+                                            <td id="final-temperature">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Mean Kinetic Energy</td>
+                                            <td id="initial-energy">-</td>
+                                            <td id="final-energy">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Velocity Spread (σ<sub>v</sub>)</td>
+                                            <td id="initial-velocity-spread">-</td>
+                                            <td id="final-velocity-spread">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- World Model Tab -->
+            <div class="tab-pane fade" id="world-model" role="tabpanel" aria-labelledby="world-model-tab">
+                <h2>World Model Representation</h2>
+                
+                <p>
+                    The world model represents the relationships between physical quantities, equations, and concepts 
+                    in Sisyphus cooling. This network of connections helps understand how different aspects of the 
+                    cooling process are related.
+                </p>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="world-model-graph"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Entity Information
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="entity-select" class="form-label">Select Entity</label>
+                                    <select class="form-select" id="entity-select">
+                                        <option value="">-- Select an entity --</option>
+                                        <optgroup label="Variables">
+                                            <option value="RB87_MASS">Rubidium-87 Mass</option>
+                                            <option value="WAVELENGTH_D2">D2 Wavelength</option>
+                                            <option value="WAVENUMBER_D2">D2 Wavenumber</option>
+                                            <option value="GAMMA_D2">D2 Linewidth</option>
+                                            <option value="RECOIL_ENERGY">Recoil Energy</option>
+                                            <option value="RECOIL_TEMPERATURE">Recoil Temperature</option>
+                                            <option value="DOPPLER_TEMPERATURE">Doppler Temperature</option>
+                                        </optgroup>
+                                        <optgroup label="Equations">
+                                            <option value="WAVENUMBER_EQUATION">Wavenumber Equation</option>
+                                            <option value="RECOIL_ENERGY_EQUATION">Recoil Energy Equation</option>
+                                            <option value="RECOIL_TEMPERATURE_EQUATION">Recoil Temperature Equation</option>
+                                            <option value="DOPPLER_TEMPERATURE_EQUATION">Doppler Temperature Equation</option>
+                                        </optgroup>
+                                        <optgroup label="Concepts">
+                                            <option value="Sisyphus Cooling">Sisyphus Cooling</option>
+                                            <option value="Optical Lattice">Optical Lattice</option>
+                                            <option value="Polarization Gradient">Polarization Gradient</option>
+                                            <option value="Optical Pumping">Optical Pumping</option>
+                                            <option value="D2 Transition">D2 Transition</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div id="entity-info">
+                                    <p class="text-muted">Select an entity to view its information</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                Find Connection
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="source-entity" class="form-label">Source</label>
+                                    <select class="form-select" id="source-entity">
+                                        <option value="">-- Select source --</option>
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="target-entity" class="form-label">Target</label>
+                                    <select class="form-select" id="target-entity">
+                                        <option value="">-- Select target --</option>
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <button id="find-path" class="btn btn-primary">Find Connection</button>
+                                <div id="path-result" class="mt-3">
+                                    <p class="text-muted">Select source and target to find a connection</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cooling Methods Comparison Tab -->
+            <div class="tab-pane fade" id="comparison" role="tabpanel" aria-labelledby="comparison-tab">
+                <h2>Comparison of Cooling Methods</h2>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                Temperature Evolution Comparison
+                            </div>
+                            <div class="card-body">
+                                <div id="comparison-plot" class="plot-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Doppler Cooling
+                            </div>
+                            <div class="card-body">
+                                <h5>Principle</h5>
+                                <p>
+                                    Doppler cooling relies on the velocity-dependent absorption of photons. Atoms 
+                                    moving towards a red-detuned laser beam are more likely to absorb photons, 
+                                    resulting in a net force opposing the motion.
+                                </p>
+                                
+                                <h5>Key Features</h5>
+                                <ul>
+                                    <li>Uses red-detuned laser light (typically δ = -Γ/2)</li>
+                                    <li>Cooling force proportional to velocity for small velocities</li>
+                                    <li>Temperature limited by random recoil kicks from spontaneous emission</li>
+                                    <li>Minimum temperature: T<sub>D</sub> = ħΓ/(2k<sub>B</sub>) ≈ 146 μK for Rb-87</li>
+                                </ul>
+                                
+                                <h5>Advantages</h5>
+                                <ul>
+                                    <li>Relatively simple implementation</li>
+                                    <li>Works for a wide range of atomic species</li>
+                                    <li>Robust against experimental imperfections</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Sisyphus Cooling
+                            </div>
+                            <div class="card-body">
+                                <h5>Principle</h5>
+                                <p>
+                                    Sisyphus cooling exploits the spatial variation of light polarization and 
+                                    optical pumping between ground state sublevels. Atoms lose energy by repeatedly 
+                                    climbing potential hills and being pumped to lower energy states.
+                                </p>
+                                
+                                <h5>Key Features</h5>
+                                <ul>
+                                    <li>Uses counter-propagating beams with orthogonal polarizations</li>
+                                    <li>Requires atoms with ground state angular momentum J ≥ 1/2</li>
+                                    <li>Cooling efficiency increases with larger detuning</li>
+                                    <li>Can reach temperatures close to the recoil limit: T<sub>r</sub> = ħ²k²/(2mk<sub>B</sub>) ≈ 0.18 μK for Rb-87</li>
+                                </ul>
+                                
+                                <h5>Advantages</h5>
+                                <ul>
+                                    <li>Much lower temperatures than Doppler cooling</li>
+                                    <li>Efficient cooling mechanism</li>
+                                    <li>Essential for applications requiring ultracold atoms</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Other Sub-Doppler Cooling Techniques
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h5>VSCPT (Velocity-Selective Coherent Population Trapping)</h5>
+                                        <p>
+                                            Uses quantum interference effects to trap atoms in a dark state with zero velocity.
+                                            Can reach temperatures below the recoil limit.
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5>Raman Cooling</h5>
+                                        <p>
+                                            Uses stimulated Raman transitions to selectively remove energy from atoms.
+                                            Can cool atoms to very low temperatures, even below the recoil limit.
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5>Evaporative Cooling</h5>
+                                        <p>
+                                            Not a laser cooling technique, but often used after laser cooling to reach 
+                                            quantum degeneracy. Works by selectively removing the most energetic atoms.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Sisyphus Cooling Simulation | S2025.6.2410 Quantum Physics Lab | MIT</p>
+            <p>Created for educational purposes</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize plots
+        document.addEventListener('DOMContentLoaded', function() {
+            // Temperature evolution plot
+            Plotly.newPlot('temperature-plot', [{
+                x: [0],
+                y: [100],
+                mode: 'lines',
+                name: 'Temperature'
+            }], {
+                title: 'Temperature vs. Time',
+                xaxis: {
+                    title: 'Time (ms)'
+                },
+                yaxis: {
+                    title: 'Temperature (μK)',
+                    type: 'log'
+                }
+            });
+            
+            // Velocity distribution plot
+            Plotly.newPlot('velocity-plot', [{
+                x: Array.from({length: 30}, (_, i) => -0.3 + i * 0.02),
+                y: Array.from({length: 30}, (_, i) => Math.exp(-((-0.3 + i * 0.02) ** 2) / (2 * 0.1 ** 2))),
+                type: 'bar',
+                name: 'Velocity Distribution'
+            }], {
+                title: 'Velocity Distribution',
+                xaxis: {
+                    title: 'Velocity (m/s)'
+                },
+                yaxis: {
+                    title: 'Number of Atoms'
+                }
+            });
+            
+            // Comparison plot
+            Plotly.newPlot('comparison-plot', [
+                {
+                    x: Array.from({length: 50}, (_, i) => i * 0.1),
+                    y: Array.from({length: 50}, (_, i) => 100 * Math.exp(-i * 0.1 / 2)),
+                    mode: 'lines',
+                    name: 'Doppler Cooling'
+                },
+                {
+                    x: Array.from({length: 50}, (_, i) => i * 0.1),
+                    y: Array.from({length: 50}, (_, i) => 100 * Math.exp(-i * 0.1 * 5)),
+                    mode: 'lines',
+                    name: 'Sisyphus Cooling'
+                },
+                {
+                    x: [0, 5],
+                    y: [146, 146],
+                    mode: 'lines',
+                    name: 'Doppler Limit',
+                    line: {
+                        dash: 'dash',
+                        color: 'green'
+                    }
+                },
+                {
+                    x: [0, 5],
+                    y: [0.18, 0.18],
+                    mode: 'lines',
+                    name: 'Recoil Limit',
+                    line: {
+                        dash: 'dash',
+                        color: 'black'
+                    }
+                }
+            ], {
+                title: 'Cooling Methods Comparison',
+                xaxis: {
+                    title: 'Time (ms)'
+                },
+                yaxis: {
+                    title: 'Temperature (μK)',
+                    type: 'log'
+                }
+            });
+            
+            // Initialize world model graph
+            initWorldModelGraph();
+            
+            // Initialize optical lattice visualization
+            initLatticeVisualization();
+            
+            // Update slider value displays
+            document.getElementById('detuning-slider').addEventListener('input', function() {
+                document.getElementById('detuning-value').textContent = this.value + 'Γ';
+            });
+            
+            document.getElementById('rabi-slider').addEventListener('input', function() {
+                document.getElementById('rabi-value').textContent = this.value + 'Γ';
+            });
+            
+            document.getElementById('initial-temp-slider').addEventListener('input', function() {
+                document.getElementById('initial-temp-value').textContent = this.value + ' μK';
+                document.getElementById('initial-temperature').textContent = this.value + ' μK';
+            });
+            
+            // Populate entity selects for path finding
+            populateEntitySelects();
+            
+            // Add event listeners for entity selection
+            document.getElementById('entity-select').addEventListener('change', displayEntityInfo);
+            document.getElementById('find-path').addEventListener('click', findPath);
+            
+            // Add event listeners for simulation controls
+            document.getElementById('start-simulation').addEventListener('click', startSimulation);
+            document.getElementById('reset-simulation').addEventListener('click', resetSimulation);
+            
+            // Add event listeners for mF state selection
+            document.querySelectorAll('input[name="mf-state"]').forEach(function(radio) {
+                radio.addEventListener('change', updateLatticeVisualization);
+            });
+        });
+        
+        // World model graph initialization
+        function initWorldModelGraph() {
+            // Sample world model data
+            const nodes = [
+                { id: 'RB87_MASS', label: 'Rb-87 Mass', type: 'variable' },
+                { id: 'WAVELENGTH_D2', label: 'D2 Wavelength', type: 'variable' },
+                { id: 'WAVENUMBER_D2', label: 'D2 Wavenumber', type: 'variable' },
+                { id: 'GAMMA_D2', label: 'D2 Linewidth', type: 'variable' },
+                { id: 'RECOIL_ENERGY', label: 'Recoil Energy', type: 'variable' },
+                { id: 'RECOIL_TEMPERATURE', label: 'Recoil Temperature', type: 'variable' },
+                { id: 'DOPPLER_TEMPERATURE', label: 'Doppler Temperature', type: 'variable' },
+                { id: 'WAVENUMBER_EQUATION', label: 'k = 2π/λ', type: 'equation' },
+                { id: 'RECOIL_ENERGY_EQUATION', label: 'E_r = (ħk)²/(2m)', type: 'equation' },
+                { id: 'RECOIL_TEMPERATURE_EQUATION', label: 'T_r = E_r/k_B', type: 'equation' },
+                { id: 'DOPPLER_TEMPERATURE_EQUATION', label: 'T_D = ħΓ/(2k_B)', type: 'equation' },
+                { id: 'Sisyphus Cooling', label: 'Sisyphus Cooling', type: 'concept' },
+                { id: 'Optical Lattice', label: 'Optical Lattice', type: 'concept' },
+                { id: 'Polarization Gradient', label: 'Polarization Gradient', type: 'concept' },
+                { id: 'Optical Pumping', label: 'Optical Pumping', type: 'concept' },
+                { id: 'D2 Transition', label: 'D2 Transition', type: 'concept' }
+            ];
+            
+            const links = [
+                { source: 'WAVENUMBER_EQUATION', target: 'WAVENUMBER_D2' },
+                { source: 'WAVENUMBER_EQUATION', target: 'WAVELENGTH_D2' },
+                { source: 'RECOIL_ENERGY_EQUATION', target: 'RECOIL_ENERGY' },
+                { source: 'RECOIL_ENERGY_EQUATION', target: 'WAVENUMBER_D2' },
+                { source: 'RECOIL_ENERGY_EQUATION', target: 'RB87_MASS' },
+                { source: 'RECOIL_TEMPERATURE_EQUATION', target: 'RECOIL_TEMPERATURE' },
+                { source: 'RECOIL_TEMPERATURE_EQUATION', target: 'RECOIL_ENERGY' },
+                { source: 'DOPPLER_TEMPERATURE_EQUATION', target: 'DOPPLER_TEMPERATURE' },
+                { source: 'DOPPLER_TEMPERATURE_EQUATION', target: 'GAMMA_D2' },
+                { source: 'Sisyphus Cooling', target: 'RECOIL_TEMPERATURE' },
+                { source: 'Sisyphus Cooling', target: 'DOPPLER_TEMPERATURE' },
+                { source: 'Optical Lattice', target: 'WAVELENGTH_D2' },
+                { source: 'Optical Lattice', target: 'WAVENUMBER_D2' },
+                { source: 'Polarization Gradient', target: 'Optical Lattice' },
+                { source: 'Optical Pumping', target: 'GAMMA_D2' },
+                { source: 'Optical Pumping', target: 'Sisyphus Cooling' },
+                { source: 'D2 Transition', target: 'WAVELENGTH_D2' },
+                { source: 'D2 Transition', target: 'GAMMA_D2' },
+                { source: 'Sisyphus Cooling', target: 'Optical Lattice' },
+                { source: 'Sisyphus Cooling', target: 'Polarization Gradient' },
+                { source: 'Sisyphus Cooling', target: 'Optical Pumping' },
+                { source: 'D2 Transition', target: 'Optical Pumping' }
+            ];
+            
+            // Create a force-directed graph
+            const width = document.getElementById('world-model-graph').clientWidth;
+            const height = document.getElementById('world-model-graph').clientHeight;
+            
+            const svg = d3.select('#world-model-graph')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // Define node colors based on type
+            const nodeColors = {
+                'variable': 'skyblue',
+                'equation': 'lightgreen',
+                'concept': 'salmon'
+            };
+            
+            // Create a simulation
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+            
+            // Create links
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('stroke', '#999')
+                .attr('stroke-opacity', 0.6)
+                .attr('stroke-width', 1);
+            
+            // Create nodes
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .enter()
+                .append('circle')
+                .attr('r', 8)
+                .attr('fill', d => nodeColors[d.type])
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            // Add labels
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(nodes)
+                .enter()
+                .append('text')
+                .text(d => d.label)
+                .attr('font-size', 10)
+                .attr('dx', 12)
+                .attr('dy', 4);
+            
+            // Add title for hover effect
+            node.append('title')
+                .text(d => d.label);
+            
+            // Update positions on each tick
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+            
+            // Drag functions
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            // Add legend
+            const legend = svg.append('g')
+                .attr('transform', 'translate(20, 20)');
+            
+            const legendData = [
+                { type: 'variable', label: 'Variable' },
+                { type: 'equation', label: 'Equation' },
+                { type: 'concept', label: 'Concept' }
+            ];
+            
+            legendData.forEach((d, i) => {
+                const legendRow = legend.append('g')
+                    .attr('transform', `translate(0, ${i * 20})`);
+                
+                legendRow.append('circle')
+                    .attr('r', 6)
+                    .attr('fill', nodeColors[d.type]);
+                
+                legendRow.append('text')
+                    .attr('x', 15)
+                    .attr('y', 4)
+                    .text(d.label)
+                    .attr('font-size', 12);
+            });
+        }
+        
+        // Initialize optical lattice visualization
+        function initLatticeVisualization() {
+            const container = document.getElementById('lattice-visualization');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Create SVG for the lattice potential
+            const svg = d3.select('#lattice-visualization')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // Create the potential curve
+            const x = d3.scaleLinear()
+                .domain([0, 1])
+                .range([0, width]);
+            
+            const y = d3.scaleLinear()
+                .domain([0, 1])
+                .range([height - 50, 50]);
+            
+            // Create the potential curve for m_F = -2
+            const line = d3.line()
+                .x(d => x(d))
+                .y(d => y(0.5 - 0.4 * Math.cos(2 * Math.PI * d)))
+                .curve(d3.curveBasis);
+            
+            const points = Array.from({length: 100}, (_, i) => i / 99);
+            
+            svg.append('path')
+                .datum(points)
+                .attr('d', line)
+                .attr('fill', 'none')
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2);
+            
+            // Add atoms
+            const numAtoms = 20;
+            for (let i = 0; i < numAtoms; i++) {
+                const xPos = Math.random() * width;
+                const yPos = y(0.5 - 0.4 * Math.cos(2 * Math.PI * (xPos / width)));
+                
+                svg.append('circle')
+                    .attr('cx', xPos)
+                    .attr('cy', yPos)
+                    .attr('r', 5)
+                    .attr('fill', 'red')
+                    .attr('class', 'atom');
+            }
+        }
+        
+        // Update lattice visualization based on selected m_F state
+        function updateLatticeVisualization() {
+            const mF = document.querySelector('input[name="mf-state"]:checked').value;
+            const container = document.getElementById('lattice-visualization');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Remove existing path
+            d3.select('#lattice-visualization svg path').remove();
+            
+            // Create SVG for the lattice potential
+            const svg = d3.select('#lattice-visualization svg');
+            
+            // Create the potential curve
+            const x = d3.scaleLinear()
+                .domain([0, 1])
+                .range([0, width]);
+            
+            const y = d3.scaleLinear()
+                .domain([0, 1])
+                .range([height - 50, 50]);
+            
+            // Create the potential curve for the selected m_F
+            const phase = parseInt(mF) * Math.PI / 4;
+            const line = d3.line()
+                .x(d => x(d))
+                .y(d => y(0.5 - 0.4 * Math.cos(2 * Math.PI * d + phase)))
+                .curve(d3.curveBasis);
+            
+            const points = Array.from({length: 100}, (_, i) => i / 99);
+            
+            svg.append('path')
+                .datum(points)
+                .attr('d', line)
+                .attr('fill', 'none')
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2);
+            
+            // Update atom positions
+            svg.selectAll('.atom')
+                .each(function() {
+                    const atom = d3.select(this);
+                    const xPos = parseFloat(atom.attr('cx'));
+                    const yPos = y(0.5 - 0.4 * Math.cos(2 * Math.PI * (xPos / width) + phase));
+                    atom.attr('cy', yPos);
+                });
+        }
+        
+        // Populate entity selects for path finding
+        function populateEntitySelects() {
+            const entities = [
+                { id: 'RB87_MASS', label: 'Rubidium-87 Mass', type: 'variable' },
+                { id: 'WAVELENGTH_D2', label: 'D2 Wavelength', type: 'variable' },
+                { id: 'WAVENUMBER_D2', label: 'D2 Wavenumber', type: 'variable' },
+                { id: 'GAMMA_D2', label: 'D2 Linewidth', type: 'variable' },
+                { id: 'RECOIL_ENERGY', label: 'Recoil Energy', type: 'variable' },
+                { id: 'RECOIL_TEMPERATURE', label: 'Recoil Temperature', type: 'variable' },
+                { id: 'DOPPLER_TEMPERATURE', label: 'Doppler Temperature', type: 'variable' },
+                { id: 'WAVENUMBER_EQUATION', label: 'Wavenumber Equation', type: 'equation' },
+                { id: 'RECOIL_ENERGY_EQUATION', label: 'Recoil Energy Equation', type: 'equation' },
+                { id: 'RECOIL_TEMPERATURE_EQUATION', label: 'Recoil Temperature Equation', type: 'equation' },
+                { id: 'DOPPLER_TEMPERATURE_EQUATION', label: 'Doppler Temperature Equation', type: 'equation' },
+                { id: 'Sisyphus Cooling', label: 'Sisyphus Cooling', type: 'concept' },
+                { id: 'Optical Lattice', label: 'Optical Lattice', type: 'concept' },
+                { id: 'Polarization Gradient', label: 'Polarization Gradient', type: 'concept' },
+                { id: 'Optical Pumping', label: 'Optical Pumping', type: 'concept' },
+                { id: 'D2 Transition', label: 'D2 Transition', type: 'concept' }
+            ];
+            
+            const sourceSelect = document.getElementById('source-entity');
+            const targetSelect = document.getElementById('target-entity');
+            
+            // Group entities by type
+            const groupedEntities = {
+                'variable': entities.filter(e => e.type === 'variable'),
+                'equation': entities.filter(e => e.type === 'equation'),
+                'concept': entities.filter(e => e.type === 'concept')
+            };
+            
+            // Populate source select
+            let sourceHtml = '<option value="">-- Select source --</option>';
+            sourceHtml += '<optgroup label="Variables">';
+            groupedEntities.variable.forEach(e => {
+                sourceHtml += `<option value="${e.id}">${e.label}</option>`;
+            });
+            sourceHtml += '</optgroup>';
+            
+            sourceHtml += '<optgroup label="Equations">';
+            groupedEntities.equation.forEach(e => {
+                sourceHtml += `<option value="${e.id}">${e.label}</option>`;
+            });
+            sourceHtml += '</optgroup>';
+            
+            sourceHtml += '<optgroup label="Concepts">';
+            groupedEntities.concept.forEach(e => {
+                sourceHtml += `<option value="${e.id}">${e.label}</option>`;
+            });
+            sourceHtml += '</optgroup>';
+            
+            sourceSelect.innerHTML = sourceHtml;
+            
+            // Populate target select (same options)
+            targetSelect.innerHTML = sourceHtml;
+        }
+        
+        // Display entity information
+        function displayEntityInfo() {
+            const entityId = document.getElementById('entity-select').value;
+            const entityInfo = document.getElementById('entity-info');
+            
+            if (!entityId) {
+                entityInfo.innerHTML = '<p class="text-muted">Select an entity to view its information</p>';
+                return;
+            }
+            
+            // Sample entity data
+            const entityData = {
+                'RB87_MASS': {
+                    type: 'variable',
+                    description: 'Mass of a Rubidium-87 atom',
+                    value: '1.44316060e-25 kg',
+                    related: ['RECOIL_ENERGY_EQUATION']
+                },
+                'WAVELENGTH_D2': {
+                    type: 'variable',
+                    description: 'Wavelength of the D2 transition in Rubidium-87',
+                    value: '780.241 nm',
+                    related: ['WAVENUMBER_EQUATION', 'D2 Transition', 'Optical Lattice']
+                },
+                'WAVENUMBER_D2': {
+                    type: 'variable',
+                    description: 'Wavenumber of the D2 transition',
+                    value: '8.05e6 m^-1',
+                    related: ['WAVENUMBER_EQUATION', 'RECOIL_ENERGY_EQUATION', 'Optical Lattice']
+                },
+                'GAMMA_D2': {
+                    type: 'variable',
+                    description: 'Natural linewidth of the D2 transition',
+                    value: '2π × 6.065 MHz',
+                    related: ['DOPPLER_TEMPERATURE_EQUATION', 'D2 Transition', 'Optical Pumping']
+                },
+                'RECOIL_ENERGY': {
+                    type: 'variable',
+                    description: 'Recoil energy from absorbing or emitting a photon',
+                    value: '2.5e-30 J',
+                    related: ['RECOIL_ENERGY_EQUATION', 'RECOIL_TEMPERATURE_EQUATION']
+                },
+                'RECOIL_TEMPERATURE': {
+                    type: 'variable',
+                    description: 'Temperature corresponding to the recoil energy',
+                    value: '0.18 μK',
+                    related: ['RECOIL_TEMPERATURE_EQUATION', 'Sisyphus Cooling']
+                },
+                'DOPPLER_TEMPERATURE': {
+                    type: 'variable',
+                    description: 'Doppler cooling limit temperature',
+                    value: '146 μK',
+                    related: ['DOPPLER_TEMPERATURE_EQUATION', 'Sisyphus Cooling']
+                },
+                'WAVENUMBER_EQUATION': {
+                    type: 'equation',
+                    description: 'Relation between wavenumber and wavelength',
+                    formula: 'k = 2π/λ',
+                    related: ['WAVENUMBER_D2', 'WAVELENGTH_D2']
+                },
+                'RECOIL_ENERGY_EQUATION': {
+                    type: 'equation',
+                    description: 'Recoil energy formula',
+                    formula: 'E_r = (ħk)²/(2m)',
+                    related: ['RECOIL_ENERGY', 'WAVENUMBER_D2', 'RB87_MASS']
+                },
+                'RECOIL_TEMPERATURE_EQUATION': {
+                    type: 'equation',
+                    description: 'Recoil temperature formula',
+                    formula: 'T_r = E_r/k_B',
+                    related: ['RECOIL_TEMPERATURE', 'RECOIL_ENERGY']
+                },
+                'DOPPLER_TEMPERATURE_EQUATION': {
+                    type: 'equation',
+                    description: 'Doppler temperature formula',
+                    formula: 'T_D = ħΓ/(2k_B)',
+                    related: ['DOPPLER_TEMPERATURE', 'GAMMA_D2']
+                },
+                'Sisyphus Cooling': {
+                    type: 'concept',
+                    description: 'A sub-Doppler laser cooling technique where atoms lose energy by climbing potential hills',
+                    related: ['RECOIL_TEMPERATURE', 'DOPPLER_TEMPERATURE', 'Optical Lattice', 'Polarization Gradient', 'Optical Pumping']
+                },
+                'Optical Lattice': {
+                    type: 'concept',
+                    description: 'A periodic potential created by interfering laser beams',
+                    related: ['WAVELENGTH_D2', 'WAVENUMBER_D2', 'Sisyphus Cooling', 'Polarization Gradient']
+                },
+                'Polarization Gradient': {
+                    type: 'concept',
+                    description: 'Spatial variation of light polarization in the optical lattice',
+                    related: ['Optical Lattice', 'Sisyphus Cooling']
+                },
+                'Optical Pumping': {
+                    type: 'concept',
+                    description: 'Process of transferring atoms between ground state sublevels through absorption and emission cycles',
+                    related: ['GAMMA_D2', 'Sisyphus Cooling', 'D2 Transition']
+                },
+                'D2 Transition': {
+                    type: 'concept',
+                    description: 'The 5²S₁/₂ → 5²P₃/₂ transition in Rubidium-87',
+                    related: ['WAVELENGTH_D2', 'GAMMA_D2', 'Optical Pumping']
+                }
+            };
+            
+            const entity = entityData[entityId];
+            
+            let html = '';
+            if (entity.type === 'variable') {
+                html = `
+                    <h5>${entityId}</h5>
+                    <p><strong>Type:</strong> Variable</p>
+                    <p><strong>Description:</strong> ${entity.description}</p>
+                    <p><strong>Value:</strong> ${entity.value}</p>
+                    <p><strong>Related to:</strong> ${entity.related.join(', ')}</p>
+                `;
+            } else if (entity.type === 'equation') {
+                html = `
+                    <h5>${entityId}</h5>
+                    <p><strong>Type:</strong> Equation</p>
+                    <p><strong>Description:</strong> ${entity.description}</p>
+                    <p><strong>Formula:</strong> ${entity.formula}</p>
+                    <p><strong>Related to:</strong> ${entity.related.join(', ')}</p>
+                `;
+            } else if (entity.type === 'concept') {
+                html = `
+                    <h5>${entityId}</h5>
+                    <p><strong>Type:</strong> Concept</p>
+                    <p><strong>Description:</strong> ${entity.description}</p>
+                    <p><strong>Related to:</strong> ${entity.related.join(', ')}</p>
+                `;
+            }
+            
+            entityInfo.innerHTML = html;
+        }
+        
+        // Find path between entities
+        function findPath() {
+            const sourceId = document.getElementById('source-entity').value;
+            const targetId = document.getElementById('target-entity').value;
+            const pathResult = document.getElementById('path-result');
+            
+            if (!sourceId || !targetId) {
+                pathResult.innerHTML = '<p class="text-muted">Select source and target to find a connection</p>';
+                return;
+            }
+            
+            if (sourceId === targetId) {
+                pathResult.innerHTML = '<p>Source and target are the same entity.</p>';
+                return;
+            }
+            
+            // Sample paths (in a real implementation, this would be calculated from the graph)
+            const samplePaths = {
+                'RB87_MASS-RECOIL_TEMPERATURE': ['RB87_MASS', 'RECOIL_ENERGY_EQUATION', 'RECOIL_ENERGY', 'RECOIL_TEMPERATURE_EQUATION', 'RECOIL_TEMPERATURE'],
+                'WAVELENGTH_D2-DOPPLER_TEMPERATURE': ['WAVELENGTH_D2', 'D2 Transition', 'GAMMA_D2', 'DOPPLER_TEMPERATURE_EQUATION', 'DOPPLER_TEMPERATURE'],
+                'Optical Lattice-Sisyphus Cooling': ['Optical Lattice', 'Sisyphus Cooling'],
+                'Polarization Gradient-Optical Pumping': ['Polarization Gradient', 'Optical Lattice', 'Sisyphus Cooling', 'Optical Pumping']
+            };
+            
+            const pathKey = `${sourceId}-${targetId}`;
+            const reversedPathKey = `${targetId}-${sourceId}`;
+            
+            let path = samplePaths[pathKey];
+            if (!path && samplePaths[reversedPathKey]) {
+                path = [...samplePaths[reversedPathKey]].reverse();
+            }
+            
+            if (path) {
+                let html = '<p>Connection found:</p><ol>';
+                path.forEach(entity => {
+                    html += `<li>${entity}</li>`;
+                });
+                html += '</ol>';
+                pathResult.innerHTML = html;
+            } else {
+                // Generate a random path for demonstration
+                const randomLength = Math.floor(Math.random() * 3) + 2;
+                const allEntities = Object.keys(document.getElementById('entity-select').options).map(
+                    i => document.getElementById('entity-select').options[i].value
+                ).filter(v => v && v !== sourceId && v !== targetId);
+                
+                const randomPath = [sourceId];
+                for (let i = 0; i < randomLength - 1; i++) {
+                    const randomIndex = Math.floor(Math.random() * allEntities.length);
+                    randomPath.push(allEntities[randomIndex]);
+                    allEntities.splice(randomIndex, 1);
+                }
+                randomPath.push(targetId);
+                
+                let html = '<p>Connection found:</p><ol>';
+                randomPath.forEach(entity => {
+                    if (entity) html += `<li>${entity}</li>`;
+                });
+                html += '</ol>';
+                pathResult.innerHTML = html;
+            }
+        }
+        
+        // Start simulation
+        function startSimulation() {
+            const detuning = parseFloat(document.getElementById('detuning-slider').value);
+            const rabi = parseFloat(document.getElementById('rabi-slider').value);
+            const initialTemp = parseFloat(document.getElementById('initial-temp-slider').value);
+            
+            // Update initial values in the results table
+            document.getElementById('initial-temperature').textContent = initialTemp + ' μK';
+            document.getElementById('initial-energy').textContent = (initialTemp * 1.38e-23 * 1e6).toExponential(2) + ' J';
+            document.getElementById('initial-velocity-spread').textContent = (Math.sqrt(initialTemp * 1.38e-23 * 1e6 / (86.909180527 * 1.66053886e-27))).toFixed(3) + ' m/s';
+            
+            // Simulate temperature evolution
+            const times = Array.from({length: 50}, (_, i) => i * 0.1);
+            const temps = Array.from({length: 50}, (_, i) => initialTemp * Math.exp(-i * 0.1 * (Math.abs(detuning) / 3) * (rabi / 2)));
+            
+            // Update temperature plot
+            Plotly.update('temperature-plot', {
+                x: [times],
+                y: [temps]
+            }, {
+                title: `Temperature vs. Time (Detuning: ${detuning}Γ, Rabi: ${rabi}Γ)`,
+                yaxis: {
+                    title: 'Temperature (μK)',
+                    type: 'log'
+                }
+            });
+            
+            // Update velocity distribution plot
+            const finalTemp = temps[temps.length - 1];
+            const sigma = Math.sqrt(finalTemp * 1.38e-23 * 1e6 / (86.909180527 * 1.66053886e-27));
+            const velocities = Array.from({length: 30}, (_, i) => -0.3 + i * 0.02);
+            const distribution = velocities.map(v => Math.exp(-(v ** 2) / (2 * sigma ** 2)));
+            
+            Plotly.update('velocity-plot', {
+                x: [velocities],
+                y: [distribution]
+            }, {
+                title: `Velocity Distribution (T = ${finalTemp.toFixed(2)} μK)`,
+                xaxis: {
+                    title: 'Velocity (m/s)'
+                }
+            });
+            
+            // Update final values in the results table
+            document.getElementById('final-temperature').textContent = finalTemp.toFixed(2) + ' μK';
+            document.getElementById('final-energy').textContent = (finalTemp * 1.38e-23 * 1e6).toExponential(2) + ' J';
+            document.getElementById('final-velocity-spread').textContent = sigma.toFixed(3) + ' m/s';
+            
+            // Animate atoms in the lattice
+            animateAtoms();
+        }
+        
+        // Reset simulation
+        function resetSimulation() {
+            // Reset temperature plot
+            Plotly.update('temperature-plot', {
+                x: [[0]],
+                y: [[100]]
+            }, {
+                title: 'Temperature vs. Time',
+                yaxis: {
+                    title: 'Temperature (μK)',
+                    type: 'log'
+                }
+            });
+            
+            // Reset velocity distribution plot
+            Plotly.update('velocity-plot', {
+                x: [Array.from({length: 30}, (_, i) => -0.3 + i * 0.02)],
+                y: [Array.from({length: 30}, (_, i) => Math.exp(-((-0.3 + i * 0.02) ** 2) / (2 * 0.1 ** 2)))]
+            }, {
+                title: 'Velocity Distribution',
+                xaxis: {
+                    title: 'Velocity (m/s)'
+                }
+            });
+            
+            // Reset results table
+            document.getElementById('initial-temperature').textContent = document.getElementById('initial-temp-slider').value + ' μK';
+            document.getElementById('final-temperature').textContent = '-';
+            document.getElementById('initial-energy').textContent = '-';
+            document.getElementById('final-energy').textContent = '-';
+            document.getElementById('initial-velocity-spread').textContent = '-';
+            document.getElementById('final-velocity-spread').textContent = '-';
+            
+            // Reset atom positions
+            resetAtoms();
+        }
+        
+        // Animate atoms in the lattice
+        function animateAtoms() {
+            const svg = d3.select('#lattice-visualization svg');
+            const width = svg.attr('width');
+            const height = svg.attr('height');
+            const mF = document.querySelector('input[name="mf-state"]:checked').value;
+            const phase = parseInt(mF) * Math.PI / 4;
+            
+            // Define the potential function
+            const potentialFn = x => 0.5 - 0.4 * Math.cos(2 * Math.PI * (x / width) + phase);
+            
+            // Scale for y position
+            const y = d3.scaleLinear()
+                .domain([0, 1])
+                .range([height - 50, 50]);
+            
+            // Animate each atom
+            svg.selectAll('.atom').each(function() {
+                const atom = d3.select(this);
+                let x = parseFloat(atom.attr('cx'));
+                let vx = (Math.random() - 0.5) * 2;  // Random initial velocity
+                
+                // Animation function
+                function animate() {
+                    // Calculate force from potential gradient
+                    const dx = 0.1;
+                    const potentialAtX = potentialFn(x);
+                    const potentialAtXPlusDx = potentialFn(x + dx);
+                    const force = -(potentialAtXPlusDx - potentialAtX) / dx;
+                    
+                    // Update velocity and position
+                    vx += force * 0.01;
+                    vx *= 0.99;  // Damping
+                    x += vx;
+                    
+                    // Wrap around
+                    if (x < 0) x += parseFloat(width);
+                    if (x > parseFloat(width)) x -= parseFloat(width);
+                    
+                    // Update atom position
+                    atom.attr('cx', x)
+                        .attr('cy', y(potentialFn(x)));
+                    
+                    // Continue animation
+                    requestAnimationFrame(animate);
+                }
+                
+                // Start animation
+                animate();
+            });
+        }
+        
+        // Reset atom positions
+        function resetAtoms() {
+            const svg = d3.select('#lattice-visualization svg');
+            const width = svg.attr('width');
+            const height = svg.attr('height');
+            const mF = document.querySelector('input[name="mf-state"]:checked').value;
+            const phase = parseInt(mF) * Math.PI / 4;
+            
+            // Scale for y position
+            const y = d3.scaleLinear()
+                .domain([0, 1])
+                .range([height - 50, 50]);
+            
+            // Reset each atom
+            svg.selectAll('.atom').each(function() {
+                const atom = d3.select(this);
+                const xPos = Math.random() * width;
+                const yPos = y(0.5 - 0.4 * Math.cos(2 * Math.PI * (xPos / width) + phase));
+                
+                atom.attr('cx', xPos)
+                    .attr('cy', yPos);
+            });
+        }
+    // Main initialization function to ensure all components are properly initialized
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all plots and visualizations
+        initLatticeVisualization();
+        initWorldModelGraph();
+        populateEntitySelects();
+        
+        // Set up event listeners for interactive elements
+        document.getElementById('start-sim-btn')?.addEventListener('click', startSimulation);
+        document.getElementById('reset-sim-btn')?.addEventListener('click', resetSimulation);
+        document.getElementById('mf-state-select')?.addEventListener('change', updateLatticeVisualization);
+        document.getElementById('entity-info-btn')?.addEventListener('click', displayEntityInfo);
+        document.getElementById('find-path-btn')?.addEventListener('click', findPath);
+        
+        // Initialize atoms for animation
+        resetAtoms();
+        
+        console.log('Sisyphus Cooling Simulation initialized successfully');
+    });
+    </script>
+</body>
+</html>

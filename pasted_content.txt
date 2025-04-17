@@ -1,0 +1,269 @@
+In ultra-low-temperature physics, Sisyphus cooling, the Sisyphus effect, or polarization gradient cooling involves the use of specially selected laser light, hitting atoms from various angles to both cool and trap them in a potential well, effectively rolling the atom down a hill of potential energy until it has lost its kinetic energy. It is a type of laser cooling of atoms used to reach temperatures below the Doppler cooling limit. This cooling method was first proposed by Claude Cohen-Tannoudji in 1989,[1] motivated by earlier experiments which observed sodium atoms cooled below the Doppler limit in an optical molasses.[2] Cohen-Tannoudji received part of the Nobel Prize in Physics in 1997 for his work. The technique is named after Sisyphus, a figure in the Greek mythology who was doomed, for all eternity, to roll a stone up a mountain only to have it roll down again whenever he got it near the summit.
+
+Method
+Sisyphus cooling can be achieved by shining two counter-propagating laser beams with orthogonal polarization onto an atom sample. Atoms moving through the potential landscape along the direction of the standing wave lose kinetic energy as they move to a potential maximum, at which point optical pumping moves them back to a lower energy state, thus lowering the total energy of the atom. This description of Sisyphus cooling is largely based on Foot's description. [3]
+
+Principle of Sisyphus cooling
+The counter-propagation of two orthogonally polarized lasers generates a standing wave in polarization with a gradient between 
+σ
+−
+{\textstyle \sigma -} (left-hand circularly polarized light), linear, and 
+σ
++
+{\textstyle \sigma +} (right-hand circularly polarized light) along the standing wave. Note that this counter propagation does not make a standing wave in intensity, but only in polarization. This gradient occurs over a length scale of 
+λ
+2
+{\textstyle {\frac {\lambda }{2}}}, and then repeats, mirrored about the y-z plane. At positions where the counter-propagating beams have a phase difference of 
+π
+2
+{\textstyle {\frac {\pi }{2}}}, the polarization is circular, and where there is no phase difference, the polarization is linear. In the intermediate regions, there is a gradient ellipticity of the superposed fields.
+
+Consider, for example, an atom with ground state angular momentum 
+J
+=
+1
+2
+{\textstyle J={\frac {1}{2}}} and excited state angular momentum 
+J
+′
+=
+3
+2
+{\textstyle J'={\frac {3}{2}}}. The 
+M
+J
+{\textstyle M_{J}} sublevels for the ground state are
+
+M
+J
+=
+−
+1
+2
+,
++
+1
+2
+{\displaystyle M_{J}=-{\frac {1}{2}},+{\frac {1}{2}}}
+
+and the 
+M
+J
+′
+{\textstyle M_{J'}} levels for the excited state are
+
+M
+J
+′
+=
+−
+3
+2
+,
+−
+1
+2
+,
++
+1
+2
+,
++
+3
+2
+{\displaystyle M_{J'}=-{\frac {3}{2}},-{\frac {1}{2}},+{\frac {1}{2}},+{\frac {3}{2}}}
+
+In the field-free case, all of these energy levels for each J value are degenerate, but in the presence of a circularly polarized light field, the Autler-Townes effect, (AC Stark shift or light shift), lifts this degeneracy. The extent and direction of this lifted degeneracy is dependent on the polarization of the light. It is this polarization dependence that is leveraged to apply a spatially-dependent slowing force to the atom.
+
+Typical optical pumping scheme
+In order to have a cooling effect, there must be some dissipation of energy. Selection rules for dipole transitions dictate that for this example,
+Δ
+J
+=
+−
+1
+,
++
+1
+{\displaystyle \Delta J=-1,+1}and
+Δ
+M
+J
+=
+0
+,
+−
+1
+,
++
+1
+{\displaystyle \Delta M_{J}=0,-1,+1}with relative intensities given by the square of the Clebsch-Gordan coefficients. Suppose we start with a single atom in the ground state, 
+J
+=
+1
+2
+{\textstyle J={\frac {1}{2}}}, in the 
+M
+J
+=
+1
+2
+{\textstyle M_{J}={\frac {1}{2}}} state at 
+z
+=
+0
+{\textstyle z=0} with velocity in the +z direction.
+
+The atom is now pumped to the 
+M
+J
+′
+=
+−
+1
+2
+{\textstyle M_{J'}=-{\frac {1}{2}}} excited state, where it spontaneously emits a photon and decays to the 
+M
+J
+=
+−
+1
+2
+{\textstyle M_{J}=-{\frac {1}{2}}} ground state. The key concept is that in the presence of 
+σ
+−
+{\textstyle \sigma -} light, the AC stark shift lowers the 
+M
+J
+=
+−
+1
+2
+{\textstyle M_{J}=-{\frac {1}{2}}} further in energy than the 
+M
+J
+=
++
+1
+2
+{\textstyle M_{J}=+{\frac {1}{2}}} state. In going from the 
+M
+J
+=
++
+1
+2
+{\textstyle M_{J}=+{\frac {1}{2}}} to the 
+M
+J
+=
+−
+1
+2
+{\textstyle M_{J}=-{\frac {1}{2}}} state, the atom has indeed lost 
+U
+0
+{\textstyle U_{0}} in energy, where
+U
+0
+=
+E
+M
+J
+=
++
+1
+2
+−
+E
+M
+J
+=
+−
+1
+2
+{\displaystyle U_{0}=E_{M_{J}=+{\frac {1}{2}}}-E_{M_{J}=-{\frac {1}{2}}}}approximately equal to the AC Stark shift
+U
+0
+≃
+ℏ
+Ω
+2
+4
+δ
+{\displaystyle U_{0}\simeq {\frac {\hbar \Omega ^{2}}{4\delta }}}where omega is the Rabi frequency and delta is the detuning.
+
+At this point, the atom is moving in the +z direction with some velocity, and eventually moves into a region with 
+σ
++
+{\textstyle \sigma +} light. The atom, still in its 
+M
+J
+=
+−
+1
+2
+{\textstyle M_{J}=-{\frac {1}{2}}} state that it was pumped into, now experiences the opposite AC Stark shift as it did in 
+σ
+{\textstyle \sigma }- light, and the 
+M
+J
+=
+1
+2
+{\textstyle M_{J}={\frac {1}{2}}} state is now lower in energy than the 
+M
+J
+=
+−
+1
+2
+{\textstyle M_{J}=-{\frac {1}{2}}} state. The atom is pumped to the 
+M
+J
+′
+=
+1
+2
+{\textstyle M_{J'}={\frac {1}{2}}} excited state, where it spontaneously emits a photon and decays to the 
+M
+J
+=
++
+1
+2
+{\textstyle M_{J}=+{\frac {1}{2}}} state. As before, this energy level has been lowered by the AC Stark shift, and the atom loses another 
+U
+0
+{\textstyle U_{0}} of energy.
+
+Repeated cycles of this nature convert kinetic energy to potential energy, and this potential energy is lost via the photon emitted during optical pumping.
+
+Limits
+The fundamental lower limit of Sisyphus cooling is the recoil temperature, 
+T
+r
+{\textstyle T_{r}}, set by the energy of the photon emitted in the decay from the J' to J state. This limit is
+k
+b
+T
+r
+=
+h
+2
+M
+λ
+2
+{\displaystyle k_{b}T_{r}={\frac {h^{2}}{M\lambda ^{2}}}}though practically the limit is a few times this value because of the extreme sensitivity to external magnetic fields in this cooling scheme. Atoms typically reach temperatures on the order of 
+μ
+K
+{\textstyle \mu K}, as compared to the doppler limit 
+T
+D
+≃
+250
+μ
+K
+{\textstyle T_{D}\simeq 250\mu K}.
+
+References
