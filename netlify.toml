@@ -1,0 +1,11 @@
+[build]
+  # Directory with the HTML files to deploy
+  publish = "."
+  
+  # Build command (none required for this simple HTML site)
+  command = ""
+
+[[redirects]]
+  from = "/*"
+  to = "/sisyphus_cooling_web_interface.html"
+  status = 200
