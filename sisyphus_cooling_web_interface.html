@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.18.0/dist/plotly.min.js"></script>
+    <script src="fix_velocity_plot.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -334,8 +335,15 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-md-12 text-center">
-                            <button id="start-simulation" class="btn btn-primary me-2">Start Simulation</button>
-                            <button id="reset-simulation" class="btn btn-secondary">Reset</button>
+                            <button id="start-sim-btn" class="btn btn-primary me-2">Start Simulation</button>
+                            <button id="reset-sim-btn" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-12">
+                            <div class="alert alert-info" id="simulation-status">
+                                Ready to run simulation. Adjust parameters and click "Start Simulation".
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -765,52 +773,43 @@
         
         // World model graph initialization
         function initWorldModelGraph() {
-            // Sample world model data
-            const nodes = [
-                { id: 'RB87_MASS', label: 'Rb-87 Mass', type: 'variable' },
-                { id: 'WAVELENGTH_D2', label: 'D2 Wavelength', type: 'variable' },
-                { id: 'WAVENUMBER_D2', label: 'D2 Wavenumber', type: 'variable' },
-                { id: 'GAMMA_D2', label: 'D2 Linewidth', type: 'variable' },
-                { id: 'RECOIL_ENERGY', label: 'Recoil Energy', type: 'variable' },
-                { id: 'RECOIL_TEMPERATURE', label: 'Recoil Temperature', type: 'variable' },
-                { id: 'DOPPLER_TEMPERATURE', label: 'Doppler Temperature', type: 'variable' },
-                { id: 'WAVENUMBER_EQUATION', label: 'k = 2π/λ', type: 'equation' },
-                { id: 'RECOIL_ENERGY_EQUATION', label: 'E_r = (ħk)²/(2m)', type: 'equation' },
-                { id: 'RECOIL_TEMPERATURE_EQUATION', label: 'T_r = E_r/k_B', type: 'equation' },
-                { id: 'DOPPLER_TEMPERATURE_EQUATION', label: 'T_D = ħΓ/(2k_B)', type: 'equation' },
-                { id: 'Sisyphus Cooling', label: 'Sisyphus Cooling', type: 'concept' },
-                { id: 'Optical Lattice', label: 'Optical Lattice', type: 'concept' },
-                { id: 'Polarization Gradient', label: 'Polarization Gradient', type: 'concept' },
-                { id: 'Optical Pumping', label: 'Optical Pumping', type: 'concept' },
-                { id: 'D2 Transition', label: 'D2 Transition', type: 'concept' }
-            ];
+            // Show loading indicator
+            document.getElementById('graph-container').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Loading physics model...</p></div>';
             
-            const links = [
-                { source: 'WAVENUMBER_EQUATION', target: 'WAVENUMBER_D2' },
-                { source: 'WAVENUMBER_EQUATION', target: 'WAVELENGTH_D2' },
-                { source: 'RECOIL_ENERGY_EQUATION', target: 'RECOIL_ENERGY' },
-                { source: 'RECOIL_ENERGY_EQUATION', target: 'WAVENUMBER_D2' },
-                { source: 'RECOIL_ENERGY_EQUATION', target: 'RB87_MASS' },
-                { source: 'RECOIL_TEMPERATURE_EQUATION', target: 'RECOIL_TEMPERATURE' },
-                { source: 'RECOIL_TEMPERATURE_EQUATION', target: 'RECOIL_ENERGY' },
-                { source: 'DOPPLER_TEMPERATURE_EQUATION', target: 'DOPPLER_TEMPERATURE' },
-                { source: 'DOPPLER_TEMPERATURE_EQUATION', target: 'GAMMA_D2' },
-                { source: 'Sisyphus Cooling', target: 'RECOIL_TEMPERATURE' },
-                { source: 'Sisyphus Cooling', target: 'DOPPLER_TEMPERATURE' },
-                { source: 'Optical Lattice', target: 'WAVELENGTH_D2' },
-                { source: 'Optical Lattice', target: 'WAVENUMBER_D2' },
-                { source: 'Polarization Gradient', target: 'Optical Lattice' },
-                { source: 'Optical Pumping', target: 'GAMMA_D2' },
-                { source: 'Optical Pumping', target: 'Sisyphus Cooling' },
-                { source: 'D2 Transition', target: 'WAVELENGTH_D2' },
-                { source: 'D2 Transition', target: 'GAMMA_D2' },
-                { source: 'Sisyphus Cooling', target: 'Optical Lattice' },
-                { source: 'Sisyphus Cooling', target: 'Polarization Gradient' },
-                { source: 'Sisyphus Cooling', target: 'Optical Pumping' },
-                { source: 'D2 Transition', target: 'Optical Pumping' }
-            ];
-            
-            // Create a force-directed graph
+            // Fetch real world model data from our backend
+            fetch('http://localhost:4000/api/world-model')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const nodes = data.nodes || [];
+                    const links = data.links || [];
+                    
+                    // Also populate entity selectors for path finding
+                    const sourceSelect = document.getElementById('source-entity');
+                    const targetSelect = document.getElementById('target-entity');
+                    
+                    // Clear existing options
+                    sourceSelect.innerHTML = '<option value="">-- Select source --</option>';
+                    targetSelect.innerHTML = '<option value="">-- Select target --</option>';
+                    
+                    // Add options for each entity
+                    nodes.forEach(node => {
+                        const sourceOption = document.createElement('option');
+                        sourceOption.value = node.id;
+                        sourceOption.textContent = node.label;
+                        sourceSelect.appendChild(sourceOption);
+                        
+                        const targetOption = document.createElement('option');
+                        targetOption.value = node.id;
+                        targetOption.textContent = node.label;
+                        targetSelect.appendChild(targetOption);
+                    });
+                    
+                    // Create a force-directed graph
             const width = document.getElementById('world-model-graph').clientWidth;
             const height = document.getElementById('world-model-graph').clientHeight;
             
@@ -1288,6 +1287,10 @@
         
         // Start simulation
         function startSimulation() {
+            // Show loading indicator
+            document.getElementById('start-sim-btn').disabled = true;
+            document.getElementById('start-sim-btn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Simulating...';
+            
             const detuning = parseFloat(document.getElementById('detuning-slider').value);
             const rabi = parseFloat(document.getElementById('rabi-slider').value);
             const initialTemp = parseFloat(document.getElementById('initial-temp-slider').value);
@@ -1297,45 +1300,66 @@
             document.getElementById('initial-energy').textContent = (initialTemp * 1.38e-23 * 1e6).toExponential(2) + ' J';
             document.getElementById('initial-velocity-spread').textContent = (Math.sqrt(initialTemp * 1.38e-23 * 1e6 / (86.909180527 * 1.66053886e-27))).toFixed(3) + ' m/s';
             
-            // Simulate temperature evolution
-            const times = Array.from({length: 50}, (_, i) => i * 0.1);
-            const temps = Array.from({length: 50}, (_, i) => initialTemp * Math.exp(-i * 0.1 * (Math.abs(detuning) / 3) * (rabi / 2)));
-            
-            // Update temperature plot
-            Plotly.update('temperature-plot', {
-                x: [times],
-                y: [temps]
-            }, {
-                title: `Temperature vs. Time (Detuning: ${detuning}Γ, Rabi: ${rabi}Γ)`,
-                yaxis: {
-                    title: 'Temperature (μK)',
-                    type: 'log'
-                }
-            });
-            
-            // Update velocity distribution plot
-            const finalTemp = temps[temps.length - 1];
-            const sigma = Math.sqrt(finalTemp * 1.38e-23 * 1e6 / (86.909180527 * 1.66053886e-27));
-            const velocities = Array.from({length: 30}, (_, i) => -0.3 + i * 0.02);
-            const distribution = velocities.map(v => Math.exp(-(v ** 2) / (2 * sigma ** 2)));
-            
-            Plotly.update('velocity-plot', {
-                x: [velocities],
-                y: [distribution]
-            }, {
-                title: `Velocity Distribution (T = ${finalTemp.toFixed(2)} μK)`,
-                xaxis: {
-                    title: 'Velocity (m/s)'
-                }
-            });
-            
-            // Update final values in the results table
-            document.getElementById('final-temperature').textContent = finalTemp.toFixed(2) + ' μK';
-            document.getElementById('final-energy').textContent = (finalTemp * 1.38e-23 * 1e6).toExponential(2) + ' J';
-            document.getElementById('final-velocity-spread').textContent = sigma.toFixed(3) + ' m/s';
-            
-            // Animate atoms in the lattice
-            animateAtoms();
+            // Call the Flask API to run the real physics simulation with our parameters
+            fetch(`http://localhost:4000/api/simulate-cooling?initialTemp=${initialTemp}&detuning=${detuning}&rabiFreq=${rabi}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Use real physics data from our backend
+                    const times = data.times.map(t => t * 1000); // Convert s to ms
+                    const sisyphusTempsMuK = data.sisyphus_temps; // Already in μK
+                    const dopplerTempsMuK = data.doppler_temps; // Already in μK
+                    
+                    // Update temperature plot with real simulation data
+                    Plotly.update('temperature-plot', {
+                        x: [times, times],
+                        y: [sisyphusTempsMuK, dopplerTempsMuK]
+                    }, {
+                        title: `Temperature vs. Time (Detuning: ${detuning}Γ, Rabi: ${rabi}Γ)`,
+                        yaxis: {
+                            title: 'Temperature (μK)',
+                            type: 'log'
+                        }
+                    });
+                    
+                    // Calculate and update velocity distribution using our enhanced function
+                    const finalTemp = sisyphusTempsMuK[sisyphusTempsMuK.length - 1];
+                    
+                    // Use our enhanced function from fix_velocity_plot.js
+                    updateVelocityPlot(finalTemp);
+                    
+                    // Log the update for debugging
+                    console.log('Updated velocity distribution with temperature:', finalTemp, 'μK');
+                    
+                    // Update simulation status in the UI
+                    document.getElementById('simulation-status').textContent = 
+                        `Simulation complete! Final temperature: ${finalTemp.toFixed(2)} μK`;
+                    
+                    // Update final values in the results table
+                    document.getElementById('final-temperature').textContent = finalTemp.toFixed(2) + ' μK';
+                    document.getElementById('final-energy').textContent = (finalTemp * 1.38e-23 * 1e6).toExponential(2) + ' J';
+                    
+                    // Calculate sigma for velocity spread (this was undefined before)
+                    const sigma = Math.sqrt(finalTemp * 1.38e-23 * 1e6 / (86.909180527 * 1.66053886e-27));
+                    document.getElementById('final-velocity-spread').textContent = sigma.toFixed(3) + ' m/s';
+                    
+                    // Animate atoms in the lattice
+                    animateAtoms();
+                    
+                    // Re-enable the button
+                    document.getElementById('start-sim-btn').disabled = false;
+                    document.getElementById('start-sim-btn').innerHTML = 'Start Simulation';
+                })
+                .catch(error => {
+                    console.error('Error running simulation:', error);
+                    alert('Error running simulation: ' + error.message);
+                    document.getElementById('start-sim-btn').disabled = false;
+                    document.getElementById('start-sim-btn').innerHTML = 'Start Simulation';
+                });
         }
         
         // Reset simulation
@@ -1450,25 +1474,27 @@
                     .attr('cy', yPos);
             });
         }
-    // Main initialization function to ensure all components are properly initialized
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize all plots and visualizations
-        initLatticeVisualization();
-        initWorldModelGraph();
-        populateEntitySelects();
         
-        // Set up event listeners for interactive elements
-        document.getElementById('start-sim-btn')?.addEventListener('click', startSimulation);
-        document.getElementById('reset-sim-btn')?.addEventListener('click', resetSimulation);
-        document.getElementById('mf-state-select')?.addEventListener('change', updateLatticeVisualization);
-        document.getElementById('entity-info-btn')?.addEventListener('click', displayEntityInfo);
-        document.getElementById('find-path-btn')?.addEventListener('click', findPath);
-        
-        // Initialize atoms for animation
-        resetAtoms();
-        
-        console.log('Sisyphus Cooling Simulation initialized successfully');
-    });
+        // Main initialization function to ensure all components are properly initialized
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all plots and visualizations
+            initLatticeVisualization();
+            initWorldModelGraph();
+            populateEntitySelects();
+            
+            // Set up event listeners for interactive elements
+            document.getElementById('start-sim-btn')?.addEventListener('click', startSimulation);
+            document.getElementById('reset-sim-btn')?.addEventListener('click', resetSimulation);
+            document.getElementById('mf-state-select')?.addEventListener('change', updateLatticeVisualization);
+            document.getElementById('entity-info-btn')?.addEventListener('click', displayEntityInfo);
+            document.getElementById('find-path-btn')?.addEventListener('click', findPath);
+            
+            // Initialize atoms for animation
+            resetAtoms();
+            
+            console.log('Sisyphus Cooling Simulation initialized successfully');
+        });
     </script>
+    <script src="debug.js"></script>
 </body>
 </html>
